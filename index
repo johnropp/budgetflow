@@ -50,15 +50,19 @@
                 </div>
             </div>
 
-            <!-- Profile Selector & Main Actions -->
+            <!-- Main Actions -->
             <div class="flex items-center gap-2 sm:gap-3">
-                <div class="relative">
-                    <select id="profileSelector" onchange="switchProfile(this.value)"
-                        class="appearance-none bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold text-xs sm:text-sm pl-3 pr-8 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition cursor-pointer">
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                    </div>
+                <button onclick="openShareModal()" title="Share Template"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    <span class="hidden md:inline">Share</span>
+                </button>
+
+                <button onclick="openResetMonthModal()" title="Start New Month"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition">
+                    <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                    <span class="hidden md:inline">New Month</span>
+                </button>
                 </div>
 
                 <button onclick="openProfileModal('new')" title="New Profile"
@@ -314,7 +318,7 @@
                     <label id="categoryBudgetLabel" for="categoryBudget" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Monthly Budget Limit</label>
                     <div class="relative">
                         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-semibold text-slate-400">$</span>
-                        <input type="number" id="categoryBudget" step="0.01" min="1" required placeholder="500" oninput="updateProratedPreview()"
+                        <input type="number" id="categoryBudget" step="0.01" min="0" required placeholder="500" oninput="updateProratedPreview()"
                             class="w-full pl-8 pr-4 py-2.5 text-base font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
                     </div>
                     <p id="proratedCalculationHint" class="hidden text-xs font-medium text-indigo-600 mt-1.5 bg-indigo-50 px-3 py-1.5 rounded-lg"></p>
@@ -606,73 +610,48 @@
             }, 3000);
         }
 
-        // Initialize Default Data on First Visit
-        function createInitialSampleData() {
-            const today = getTodayISO();
-            const cat1 = uid('cat');
-            const cat2 = uid('cat');
-            const cat3 = uid('cat');
-            const cat4 = uid('cat');
-            const cat5 = uid('cat');
-            const cat6 = uid('cat');
-
-            const wifeProfileId = uid('prof');
-            const siblingProfileId = uid('prof');
-
-            return {
-                activeProfileId: wifeProfileId,
-                profiles: [
-                    {
-                        id: wifeProfileId,
-                        name: "Wife's Monthly Budget",
-                        categories: [
-                            { id: cat1, name: 'Groceries & Produce', budget: 650, frequency: 'monthly', targetTotal: 650, rollover: false, carriedBalance: 0, color: 'emerald', icon: 'shopping-cart' },
-                            { id: cat2, name: 'Dining Out & Coffee', budget: 240, frequency: 'monthly', targetTotal: 240, rollover: false, carriedBalance: 0, color: 'amber', icon: 'utensils' },
-                            { id: cat3, name: 'Gas & Car', budget: 160, frequency: 'monthly', targetTotal: 160, rollover: false, carriedBalance: 0, color: 'blue', icon: 'car' },
-                            { id: cat4, name: 'Travel & Getaways', budget: 200, frequency: 'monthly', targetTotal: 200, rollover: true, carriedBalance: 350, color: 'cyan', icon: 'plane' },
-                            { id: cat5, name: 'Clothing & Wardrobe', budget: 125, frequency: 'monthly', targetTotal: 125, rollover: true, carriedBalance: 85, color: 'violet', icon: 'shopping-bag' },
-                            { id: cat6, name: 'Car Insurance & Reg (Annual)', budget: 120, frequency: 'annual', targetTotal: 1440, rollover: true, carriedBalance: 480, color: 'slate', icon: 'piggy-bank' }
-                        ],
-                        transactions: [
-                            { id: uid('tx'), categoryId: cat1, amount: 142.80, description: "Trader Joe's Weekly Run", date: today },
-                            { id: uid('tx'), categoryId: cat2, amount: 46.50, description: 'Lunch with friends', date: today },
-                            { id: uid('tx'), categoryId: cat3, amount: 48.20, description: 'Shell Gas Station', date: today },
-                            { id: uid('tx'), categoryId: cat5, amount: 65.00, description: 'Target & Sweater', date: today }
+        // Initialize Default Data on First Visit (Single Profile, $0 Limits)
+                function createInitialSampleData() {
+                    const defaultProfileId = uid('prof');
+        
+                    return {
+                        activeProfileId: defaultProfileId,
+                        profiles: [
+                            {
+                                id: defaultProfileId,
+                                name: "Household Budget",
+                                categories: [
+                                    { id: uid('cat'), name: 'Groceries & Produce', budget: 0, frequency: 'monthly', targetTotal: 0, rollover: false, carriedBalance: 0, color: 'emerald', icon: 'shopping-cart' },
+                                    { id: uid('cat'), name: 'Dining Out & Coffee', budget: 0, frequency: 'monthly', targetTotal: 0, rollover: false, carriedBalance: 0, color: 'amber', icon: 'utensils' },
+                                    { id: uid('cat'), name: 'Gas & Car', budget: 0, frequency: 'monthly', targetTotal: 0, rollover: false, carriedBalance: 0, color: 'blue', icon: 'car' },
+                                    { id: uid('cat'), name: 'Travel & Getaways', budget: 0, frequency: 'monthly', targetTotal: 0, rollover: true, carriedBalance: 0, color: 'cyan', icon: 'plane' },
+                                    { id: uid('cat'), name: 'Clothing & Wardrobe', budget: 0, frequency: 'monthly', targetTotal: 0, rollover: true, carriedBalance: 0, color: 'violet', icon: 'shopping-bag' },
+                                    { id: uid('cat'), name: 'Car Insurance & Reg (Annual)', budget: 0, frequency: 'annual', targetTotal: 0, rollover: true, carriedBalance: 0, color: 'slate', icon: 'piggy-bank' }
+                                ],
+                                transactions: []
+                            }
                         ]
-                    },
-                    {
-                        id: siblingProfileId,
-                        name: "Sibling Starter Budget",
-                        categories: [
-                            { id: uid('cat'), name: 'Groceries', budget: 400, frequency: 'monthly', targetTotal: 400, rollover: false, carriedBalance: 0, color: 'emerald', icon: 'shopping-cart' },
-                            { id: uid('cat'), name: 'Takeout & Bars', budget: 200, frequency: 'monthly', targetTotal: 200, rollover: false, carriedBalance: 0, color: 'orange', icon: 'coffee' },
-                            { id: uid('cat'), name: 'Travel & Weekend Trips', budget: 150, frequency: 'monthly', targetTotal: 150, rollover: true, carriedBalance: 150, color: 'cyan', icon: 'plane' },
-                            { id: uid('cat'), name: 'Auto Insurance (6-Mo)', budget: 110, frequency: 'semi-annual', targetTotal: 660, rollover: true, carriedBalance: 220, color: 'blue', icon: 'car' }
-                        ],
-                        transactions: []
-                    }
-                ]
-            };
-        }
-
-        // Helper: Normalize category properties for backwards compatibility
-        function normalizeCategory(cat) {
-            const frequency = cat.frequency || 'monthly';
-            const monthlyBudget = Number(cat.budget || 0);
-            const months = frequency === 'annual' ? 12 : (frequency === 'semi-annual' ? 6 : 1);
-            const targetTotal = Number(cat.targetTotal || (monthlyBudget * months));
-            const rollover = frequency !== 'monthly' ? true : Boolean(cat.rollover);
-            const carriedBalance = Number(cat.carriedBalance || 0);
-
-            return {
-                ...cat,
-                frequency,
-                budget: monthlyBudget,
-                targetTotal,
-                rollover,
-                carriedBalance
-            };
-        }
+                    };
+                }
+        
+                // Helper: Normalize category properties for backwards compatibility
+                function normalizeCategory(cat) {
+                    const frequency = cat.frequency || 'monthly';
+                    const monthlyBudget = Number(cat.budget || 0);
+                    const months = frequency === 'annual' ? 12 : (frequency === 'semi-annual' ? 6 : 1);
+                    const targetTotal = Number(cat.targetTotal || (monthlyBudget * months));
+                    const rollover = frequency !== 'monthly' ? true : Boolean(cat.rollover);
+                    const carriedBalance = Number(cat.carriedBalance || 0);
+        
+                    return {
+                        ...cat,
+                        frequency,
+                        budget: monthlyBudget,
+                        targetTotal,
+                        rollover,
+                        carriedBalance
+                    };
+                }
 
         // =====================================================================
         // LOAD & SAVE STATE
@@ -766,11 +745,13 @@
             const profile = getActiveProfile();
             if (!profile) return;
 
-            // Render Profile Selector Dropdown
+            // Safely update profile selector only if it exists in DOM
             const selector = document.getElementById('profileSelector');
-            selector.innerHTML = appState.profiles.map(p => `
-                <option value="${p.id}" ${p.id === profile.id ? 'selected' : ''}>${escapeHTML(p.name)}</option>
-            `).join('');
+            if (selector) {
+                selector.innerHTML = appState.profiles.map(p => `
+                    <option value="${p.id}" ${p.id === profile.id ? 'selected' : ''}>${escapeHTML(p.name)}</option>
+                `).join('');
+            }
 
             renderSummary(profile);
             renderCategories(profile);
@@ -1173,7 +1154,7 @@
             const rollover = frequency !== 'monthly' ? true : document.getElementById('categoryRollover').checked;
             const carriedBalance = rollover ? (parseFloat(document.getElementById('categoryCarriedBalance').value) || 0) : 0;
 
-            if (!name || isNaN(enteredAmount) || enteredAmount <= 0) return;
+            if (!name || isNaN(enteredAmount) || enteredAmount < 0) return;
 
             const months = frequency === 'annual' ? 12 : (frequency === 'semi-annual' ? 6 : 1);
             const monthlyBudget = Math.round((enteredAmount / months) * 100) / 100;
