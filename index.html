@@ -54,7 +54,7 @@
                 <button onclick="openProfileModal('new')" title="New Budget Profile"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition">
                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-                    <span class="hidden md:inline">New Profile</span>
+                    <span class="hidden md:inline">New Budget Profile</span>
                 </button>
 
                 <button onclick="openShareModal()" title="Share Template"
@@ -363,7 +363,7 @@
     <div id="profileModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="modal-panel bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                <h3 id="profileModalTitle" class="font-display font-bold text-lg text-slate-900">Create New Profile</h3>
+                <h3 id="profileModalTitle" class="font-display font-bold text-lg text-slate-900">Create New Budget Profile</h3>
                 <button onclick="closeModal('profileModal')" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -448,7 +448,7 @@
 
                 <div>
                     <label for="importTemplateText" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">2. Import Shared Template</label>
-                    <p class="text-xs text-slate-500 mb-2">Paste a shared template code from a sibling to instantly load their category setup into a new profile.</p>
+                    <p class="text-xs text-slate-500 mb-2">Paste a shared template code from a sibling to instantly load their category setup into a new budget profile.</p>
                     <textarea id="importTemplateText" rows="3" placeholder="Paste template JSON string here..."
                         class="w-full p-3 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 transition"></textarea>
                     <button onclick="handleImportTemplate()"
@@ -550,7 +550,7 @@
         let selectedCategoryColor = 'emerald';
         let selectedCategoryIcon = 'shopping-cart';
 
-        // Preset Templates for New Profiles
+        // Preset Templates for New Budget Profiles
         const PRESET_TEMPLATES = {
             essentials: [
                 { name: 'Groceries & Household', budget: 650, frequency: 'monthly', targetTotal: 650, rollover: false, carriedBalance: 0, color: 'emerald', icon: 'shopping-cart' },
@@ -974,7 +974,7 @@
             document.getElementById('editingProfileId').value = '';
             document.getElementById('profileName').value = '';
             document.getElementById('presetTemplateContainer').classList.remove('hidden');
-            document.getElementById('profileModalTitle').textContent = 'Create New Profile';
+            document.getElementById('profileModalTitle').textContent = 'Create New Budget Profile';
             openModal('profileModal');
             setTimeout(() => document.getElementById('profileName').focus(), 100);
         }
