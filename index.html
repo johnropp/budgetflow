@@ -1,22 +1,94 @@
-<!-- ... existing code ... -->
-            <div class="flex items-center gap-2 self-start sm:self-auto">
-                <button onclick="openProfileModal('new')"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/70 rounded-lg transition">
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetFlow - Personal & Family Budget Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        .modal-panel { animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-900 antialiased flex flex-col">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg text-slate-900 leading-tight">BudgetFlow</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Simple family spending & sinking funds tracker</p>
+                </div>
+            </div>
+
+            <!-- Profile Selector & Main Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="relative">
+                    <select id="profileSelector" onchange="switchProfile(this.value)"
+                        class="appearance-none bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold text-xs sm:text-sm pl-3 pr-8 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition cursor-pointer">
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <button onclick="openProfileModal('new')" title="New Profile"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition">
                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-                    <span>New Profile</span>
+                    <span class="hidden md:inline">New Profile</span>
                 </button>
-                <button onclick="openResetMonthModal()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200/70 rounded-lg transition">
+
+                <button onclick="openShareModal()" title="Share Template"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    <span class="hidden md:inline">Share</span>
+                </button>
+
+                <button onclick="openResetMonthModal()" title="Start New Month"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition">
                     <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                    <span>Start New Month</span>
+                    <span class="hidden md:inline">New Month</span>
                 </button>
             </div>
         </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
 
         <!-- Summary Overview Cards -->
         <section aria-label="Budget Summary" class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
-                <!-- Total Available (Monthly Allotment + Rollovers) -->
+                <!-- Total Available -->
                 <div class="flex items-start justify-between sm:border-r sm:border-slate-100 sm:pr-6">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Available</p>
@@ -64,7 +136,149 @@
                 </div>
             </div>
         </section>
-<!-- ... existing code ... -->
+
+        <!-- Categories Section Header & Actions -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="font-display text-xl font-bold text-slate-900">Budget Categories</h2>
+                <p class="text-sm text-slate-500">Track monthly expenses, rollovers, and sinking funds.</p>
+            </div>
+            <div class="flex items-center gap-2.5">
+                <button onclick="openExpenseModal()"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Log Expense</span>
+                </button>
+                <button onclick="openCategoryModal()"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition">
+                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                    <span>Add Category</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Categories Grid -->
+        <div id="categoriesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Empty State for Categories -->
+        <div id="emptyCategoriesState" class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="folder-open" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-display font-bold text-slate-800 text-base">No categories yet</h3>
+            <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Create your first budget category or load a preset template to start tracking spending.</p>
+            <button onclick="openCategoryModal()" class="mt-4 px-4 py-2 bg-emerald-600 text-white font-semibold text-xs rounded-xl hover:bg-emerald-700 transition">
+                Create First Category
+            </button>
+        </div>
+
+        <!-- Transaction History Section -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                <div>
+                    <h3 class="font-display font-bold text-lg text-slate-900">Recent Transactions</h3>
+                    <p class="text-xs text-slate-500">All expenses logged this month</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                        </span>
+                        <input type="text" id="transactionSearch" oninput="renderTransactions()" placeholder="Search expenses..."
+                            class="pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 transition w-40 sm:w-56">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                            <th class="pb-3 pl-2">Description</th>
+                            <th class="pb-3 px-3">Category</th>
+                            <th class="pb-3 px-3">Date</th>
+                            <th class="pb-3 px-3 text-right">Amount</th>
+                            <th class="pb-3 pr-2 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State for Transactions -->
+            <div id="emptyTransactionsState" class="hidden text-center py-8">
+                <p class="text-xs text-slate-400">No transactions logged this month.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+        <p>BudgetFlow &bull; Saved locally in your browser. Share via template codes or deploy instantly.</p>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODALS -->
+    <!-- ===================================================================== -->
+
+    <!-- 1. LOG EXPENSE MODAL -->
+    <div id="expenseModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-panel bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 class="font-display font-bold text-lg text-slate-900">Log Expense</h3>
+                <button onclick="closeModal('expenseModal')" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="expenseForm" onsubmit="handleSaveExpense(event)" class="p-6 space-y-4">
+                <div>
+                    <label for="expenseCategory" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Category</label>
+                    <select id="expenseCategory" required onchange="updateExpenseCategoryPreview()"
+                        class="w-full px-3.5 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
+                    </select>
+                    <p id="expenseCategoryPreview" class="text-xs font-medium text-slate-500 mt-1.5"></p>
+                </div>
+
+                <div>
+                    <label for="expenseAmount" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Amount ($)</label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-semibold text-slate-400">$</span>
+                        <input type="number" id="expenseAmount" step="0.01" min="0.01" required placeholder="0.00"
+                            class="w-full pl-8 pr-4 py-2.5 text-lg font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="expenseDescription" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Description / Merchant</label>
+                    <input type="text" id="expenseDescription" required placeholder="e.g., Trader Joe's, Shell Gas, Amazon"
+                        class="w-full px-3.5 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
+                </div>
+
+                <div>
+                    <label for="expenseDate" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Date</label>
+                    <input type="date" id="expenseDate" required
+                        class="w-full px-3.5 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
+                </div>
+
+                <div class="pt-2 flex items-center gap-3">
+                    <button type="button" onclick="closeModal('expenseModal')"
+                        class="flex-1 py-2.5 px-4 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-2.5 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+                        Deduct Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 2. ADD / EDIT CATEGORY MODAL -->
     <div id="categoryModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="modal-panel bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
@@ -95,7 +309,7 @@
                     </select>
                 </div>
 
-                <!-- Budget Input (Adapts based on Monthly vs Sinking Fund) -->
+                <!-- Budget Input -->
                 <div>
                     <label id="categoryBudgetLabel" for="categoryBudget" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Monthly Budget Limit</label>
                     <div class="relative">
@@ -106,7 +320,7 @@
                     <p id="proratedCalculationHint" class="hidden text-xs font-medium text-indigo-600 mt-1.5 bg-indigo-50 px-3 py-1.5 rounded-lg"></p>
                 </div>
 
-                <!-- Rollover Toggle (Shown for Monthly; Auto-enabled for Sinking Funds) -->
+                <!-- Rollover Toggle -->
                 <div id="rolloverToggleContainer" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
                     <label class="flex items-start gap-3 cursor-pointer">
                         <input type="checkbox" id="categoryRollover" onchange="updateCategoryModalFields()"
@@ -118,7 +332,7 @@
                     </label>
                 </div>
 
-                <!-- Seed / Adjust Carried Rollover Balance -->
+                <!-- Seed Carried Rollover Balance -->
                 <div id="carriedBalanceContainer" class="hidden">
                     <label for="categoryCarriedBalance" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Current Accumulated Rollover Balance</label>
                     <div class="relative">
@@ -154,8 +368,110 @@
             </form>
         </div>
     </div>
-<!-- ... existing code ... -->
-    <!-- 5. CONFIRMATION MODAL (Used for Reset Month / Delete Category / Delete Profile) -->
+
+    <!-- 3. PROFILE MODAL -->
+    <div id="profileModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-panel bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 id="profileModalTitle" class="font-display font-bold text-lg text-slate-900">Create New Profile</h3>
+                <button onclick="closeModal('profileModal')" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="profileForm" onsubmit="handleSaveProfile(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editingProfileId">
+
+                <div>
+                    <label for="profileName" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Profile Name</label>
+                    <input type="text" id="profileName" required placeholder="e.g., Sister's Budget, John's Wallet"
+                        class="w-full px-3.5 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition">
+                </div>
+
+                <div id="presetTemplateContainer">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Starting Template Preset</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="radio" name="profilePreset" value="essentials" checked class="text-emerald-600 focus:ring-emerald-500">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">Essential & Fun (Recommended)</span>
+                                <span class="block text-[11px] text-slate-500">Includes Groceries, Dining, Gas, Travel, Clothing, and Annual Car Insurance.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="radio" name="profilePreset" value="503020" class="text-emerald-600 focus:ring-emerald-500">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">50/30/20 Rule</span>
+                                <span class="block text-[11px] text-slate-500">Needs, Wants, and Savings / Sinking Funds buckets.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="radio" name="profilePreset" value="blank" class="text-emerald-600 focus:ring-emerald-500">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">Start Blank</span>
+                                <span class="block text-[11px] text-slate-500">Create your own custom categories from scratch.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center gap-3">
+                    <button type="button" onclick="closeModal('profileModal')"
+                        class="flex-1 py-2.5 px-4 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-2.5 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+                        Create Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. SHARE / TEMPLATE MODAL -->
+    <div id="shareModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-panel bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 class="font-display font-bold text-lg text-slate-900">Share & Import Budget Template</h3>
+                <button onclick="closeModal('shareModal')" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">1. Export Your Category Setup</label>
+                    <p class="text-xs text-slate-500 mb-2">Copy this configuration code to share your exact categories and budget limits with your siblings (personal transactions are never included).</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="exportTemplateText" readonly
+                            class="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-600 focus:outline-none">
+                        <button onclick="copyTemplateCode()"
+                            class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition shrink-0 flex items-center gap-1.5">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <div>
+                    <label for="importTemplateText" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">2. Import Shared Template</label>
+                    <p class="text-xs text-slate-500 mb-2">Paste a shared template code from a sibling to instantly load their category setup into a new profile.</p>
+                    <textarea id="importTemplateText" rows="3" placeholder="Paste template JSON string here..."
+                        class="w-full p-3 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30 transition"></textarea>
+                    <button onclick="handleImportTemplate()"
+                        class="mt-2.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Import & Create Profile</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. CONFIRMATION MODAL -->
     <div id="confirmModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
         <div class="modal-panel bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
             <div id="confirmModalIconBox" class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -177,7 +493,47 @@
             </div>
         </div>
     </div>
-<!-- ... existing code ... -->
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastMessage">Action completed successfully</span>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- ===================================================================== -->
+    <script>
+        const STORAGE_KEY = 'budgetflow_data_v2';
+
+        let appState = {
+            activeProfileId: '',
+            profiles: []
+        };
+
+        const CATEGORY_COLORS = [
+            { id: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
+            { id: 'amber', bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
+            { id: 'blue', bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
+            { id: 'cyan', bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-cyan-200' },
+            { id: 'violet', bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200' },
+            { id: 'rose', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
+            { id: 'indigo', bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200' },
+            { id: 'orange', bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+            { id: 'slate', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-300' }
+        ];
+
+        const CATEGORY_ICONS = [
+            'shopping-cart', 'utensils', 'car', 'plane', 'shopping-bag', 'piggy-bank',
+            'home', 'sparkles', 'coffee', 'heart-pulse', 'graduation-cap', 'gift',
+            'film', 'zap', 'shield', 'smartphone', 'tag', 'briefcase'
+        ];
+
+        let selectedCategoryColor = 'emerald';
+        let selectedCategoryIcon = 'shopping-cart';
+
         // Preset Templates for New Profiles
         const PRESET_TEMPLATES = {
             essentials: [
@@ -195,7 +551,35 @@
             ],
             blank: []
         };
-<!-- ... existing code ... -->
+
+        // Utility Functions
+        function uid(prefix = 'id') {
+            return prefix + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function formatMoney(amount) {
+            return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getTodayISO() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
         // Initialize Default Data on First Visit
         function createInitialSampleData() {
             const today = getTodayISO();
@@ -284,7 +668,42 @@
             appState = createInitialSampleData();
             saveState();
         }
-<!-- ... existing code ... -->
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Error saving localStorage:', e);
+            }
+        }
+
+        function getActiveProfile() {
+            let profile = appState.profiles.find(p => p.id === appState.activeProfileId);
+            if (!profile && appState.profiles.length > 0) {
+                profile = appState.profiles[0];
+                appState.activeProfileId = profile.id;
+            }
+            return profile;
+        }
+
+        // Render Engine
+        function renderAll() {
+            const profile = getActiveProfile();
+            if (!profile) return;
+
+            // Render Profile Selector Dropdown
+            const selector = document.getElementById('profileSelector');
+            selector.innerHTML = appState.profiles.map(p => `
+                <option value="${p.id}" ${p.id === profile.id ? 'selected' : ''}>${escapeHTML(p.name)}</option>
+            `).join('');
+
+            renderSummary(profile);
+            renderCategories(profile);
+            renderTransactions();
+            populateExpenseCategoryDropdown();
+            lucide.createIcons();
+        }
+
         function renderSummary(profile) {
             const totalMonthlyAllotment = profile.categories.reduce((sum, cat) => sum + Number(cat.budget || 0), 0);
             const totalCarriedRollover = profile.categories.reduce((sum, cat) => sum + Number(cat.carriedBalance || 0), 0);
@@ -360,7 +779,6 @@
 
                 const colorObj = CATEGORY_COLORS.find(c => c.id === cat.color) || CATEGORY_COLORS[0];
 
-                // Cadence & Rollover Badge
                 let typeBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Monthly</span>`;
                 if (cat.frequency === 'annual') {
                     typeBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/60"><i data-lucide="calendar" class="w-2.5 h-2.5"></i> Annual Fund (${formatMoney(cat.targetTotal)}/yr)</span>`;
@@ -370,7 +788,6 @@
                     typeBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200/60"><i data-lucide="repeat" class="w-2.5 h-2.5"></i> Rollover</span>`;
                 }
 
-                // Subtitle breakdown showing monthly allotment + rollover balance
                 let subtitleHTML = `<p class="text-xs text-slate-500 mt-0.5">Allotment: <span class="font-semibold text-slate-700">${formatMoney(cat.budget)}/mo</span></p>`;
                 if (cat.rollover || cat.frequency !== 'monthly') {
                     subtitleHTML = `
@@ -400,7 +817,6 @@
                 return `
                     <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300/90 transition p-5 flex flex-col justify-between">
                         <div>
-                            <!-- Card Header -->
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex items-start gap-3 min-w-0">
                                     <div class="w-10 h-10 rounded-xl ${colorObj.bg} ${colorObj.text} flex items-center justify-center shrink-0 mt-0.5">
@@ -413,7 +829,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Edit / Delete Actions -->
                                 <div class="flex items-center gap-1 shrink-0">
                                     <button onclick="openCategoryModal('${cat.id}')" title="Edit Category"
                                         class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
@@ -426,7 +841,6 @@
                                 </div>
                             </div>
 
-                            <!-- Numbers Row -->
                             <div class="mt-5 flex items-baseline justify-between">
                                 <div>
                                     <span class="text-xs text-slate-400 block">Available</span>
@@ -438,7 +852,6 @@
                                 </div>
                             </div>
 
-                            <!-- Progress Bar -->
                             <div class="mt-3">
                                 <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                                     <div class="progress-fill h-full ${barColor} rounded-full" style="width: ${clampedPct}%"></div>
@@ -450,7 +863,6 @@
                             </div>
                         </div>
 
-                        <!-- Quick Deduct Action -->
                         <button onclick="openExpenseModal('${cat.id}')"
                             class="mt-4 w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
@@ -460,33 +872,100 @@
                 `;
             }).join('');
         }
-<!-- ... existing code ... -->
-        function updateExpenseCategoryPreview() {
-            const profile = getActiveProfile();
-            const catId = document.getElementById('expenseCategory').value;
-            const rawCat = profile.categories.find(c => c.id === catId);
-            const previewEl = document.getElementById('expenseCategoryPreview');
 
-            if (!rawCat) {
-                previewEl.textContent = '';
+        function renderTransactions() {
+            const profile = getActiveProfile();
+            const tbody = document.getElementById('transactionsTableBody');
+            const emptyState = document.getElementById('emptyTransactionsState');
+            const query = (document.getElementById('transactionSearch').value || '').toLowerCase();
+
+            const filtered = profile.transactions.filter(tx => {
+                const cat = profile.categories.find(c => c.id === tx.categoryId);
+                const catName = cat ? cat.name.toLowerCase() : '';
+                const desc = tx.description.toLowerCase();
+                return desc.includes(query) || catName.includes(query);
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
                 return;
             }
 
-            const cat = normalizeCategory(rawCat);
-            const spent = profile.transactions
-                .filter(tx => tx.categoryId === cat.id)
-                .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-            const totalAvailable = cat.carriedBalance + cat.budget;
-            const remaining = totalAvailable - spent;
+            emptyState.classList.add('hidden');
 
-            previewEl.innerHTML = `Currently <strong class="${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatMoney(remaining)}</strong> available of ${formatMoney(totalAvailable)} total.`;
-        }
-<!-- ... existing code ... -->
-        function selectCategoryIcon(iconName) {
-            selectedCategoryIcon = iconName;
-            renderPickers();
+            tbody.innerHTML = filtered.map(tx => {
+                const cat = profile.categories.find(c => c.id === tx.categoryId);
+                const catName = cat ? cat.name : 'Uncategorized';
+                const colorObj = cat ? (CATEGORY_COLORS.find(c => c.id === cat.color) || CATEGORY_COLORS[0]) : CATEGORY_COLORS[0];
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 pl-2 font-medium text-slate-800">${escapeHTML(tx.description)}</td>
+                        <td class="py-3 px-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${colorObj.bg} ${colorObj.text}">
+                                ${escapeHTML(catName)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-xs text-slate-500">${escapeHTML(tx.date)}</td>
+                        <td class="py-3 px-3 text-right font-semibold text-slate-900">-${formatMoney(tx.amount)}</td>
+                        <td class="py-3 pr-2 text-right">
+                            <button onclick="confirmDeleteTransaction('${tx.id}')" title="Delete Expense"
+                                class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
         }
 
+        // Profile Management
+        function switchProfile(profileId) {
+            appState.activeProfileId = profileId;
+            saveState();
+            renderAll();
+        }
+
+        function openProfileModal(mode) {
+            document.getElementById('editingProfileId').value = '';
+            document.getElementById('profileName').value = '';
+            document.getElementById('presetTemplateContainer').classList.remove('hidden');
+            document.getElementById('profileModalTitle').textContent = 'Create New Profile';
+            openModal('profileModal');
+            setTimeout(() => document.getElementById('profileName').focus(), 100);
+        }
+
+        function handleSaveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('profileName').value.trim();
+            const presetRadio = document.querySelector('input[name="profilePreset"]:checked');
+            const presetKey = presetRadio ? presetRadio.value : 'essentials';
+
+            if (!name) return;
+
+            const newId = uid('prof');
+            const templateCategories = (PRESET_TEMPLATES[presetKey] || []).map(c => ({
+                ...c,
+                id: uid('cat')
+            }));
+
+            appState.profiles.push({
+                id: newId,
+                name: name,
+                categories: templateCategories,
+                transactions: []
+            });
+
+            appState.activeProfileId = newId;
+            saveState();
+            closeModal('profileModal');
+            renderAll();
+            showToast(`Created profile "${name}"`);
+        }
+
+        // Category Management
         function updateCategoryModalFields() {
             const frequency = document.getElementById('categoryFrequency').value;
             const budgetLabel = document.getElementById('categoryBudgetLabel');
@@ -517,7 +996,6 @@
                     carriedContainer.classList.add('hidden');
                 }
             }
-
             updateProratedPreview();
         }
 
@@ -579,10 +1057,40 @@
             setTimeout(() => nameInput.focus(), 100);
         }
 
+        function renderPickers() {
+            // Color Picker
+            const colorGroup = document.getElementById('colorPickerGroup');
+            colorGroup.innerHTML = CATEGORY_COLORS.map(c => `
+                <button type="button" onclick="selectCategoryColor('${c.id}')"
+                    class="w-8 h-8 rounded-xl ${c.bg} ${c.text} border ${selectedCategoryColor === c.id ? 'ring-2 ring-slate-900 border-transparent scale-110' : c.border} flex items-center justify-center transition">
+                    <div class="w-3 h-3 rounded-full bg-current"></div>
+                </button>
+            `).join('');
+
+            // Icon Picker
+            const iconGroup = document.getElementById('iconPickerGroup');
+            iconGroup.innerHTML = CATEGORY_ICONS.map(iconName => `
+                <button type="button" onclick="selectCategoryIcon('${iconName}')"
+                    class="p-2 rounded-xl border ${selectedCategoryIcon === iconName ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} flex items-center justify-center transition">
+                    <i data-lucide="${iconName}" class="w-4 h-4"></i>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function selectCategoryColor(colorId) {
+            selectedCategoryColor = colorId;
+            renderPickers();
+        }
+
+        function selectCategoryIcon(iconName) {
+            selectedCategoryIcon = iconName;
+            renderPickers();
+        }
+
         function handleSaveCategory(e) {
             e.preventDefault();
             const profile = getActiveProfile();
-
             const editId = document.getElementById('editingCategoryId').value;
             const name = document.getElementById('categoryName').value.trim();
             const frequency = document.getElementById('categoryFrequency').value;
@@ -628,11 +1136,122 @@
             closeModal('categoryModal');
             renderAll();
         }
-<!-- ... existing code ... -->
+
+        function confirmDeleteCategory(catId) {
+            const profile = getActiveProfile();
+            const cat = profile.categories.find(c => c.id === catId);
+            if (!cat) return;
+
+            openConfirmModal(
+                `Delete "${cat.name}"?`,
+                `This will delete the category and any associated transactions logged to it.`,
+                () => {
+                    profile.categories = profile.categories.filter(c => c.id !== catId);
+                    profile.transactions = profile.transactions.filter(tx => tx.categoryId !== catId);
+                    saveState();
+                    renderAll();
+                    showToast(`Deleted category "${cat.name}"`);
+                }
+            );
+        }
+
+        // Expense Management
+        function populateExpenseCategoryDropdown() {
+            const profile = getActiveProfile();
+            const select = document.getElementById('expenseCategory');
+
+            if (profile.categories.length === 0) {
+                select.innerHTML = `<option value="">No categories available - create one first</option>`;
+                return;
+            }
+
+            select.innerHTML = profile.categories.map(c => `
+                <option value="${c.id}">${escapeHTML(c.name)}</option>
+            `).join('');
+
+            updateExpenseCategoryPreview();
+        }
+
+        function updateExpenseCategoryPreview() {
+            const profile = getActiveProfile();
+            const catId = document.getElementById('expenseCategory').value;
+            const rawCat = profile.categories.find(c => c.id === catId);
+            const previewEl = document.getElementById('expenseCategoryPreview');
+
+            if (!rawCat) {
+                previewEl.textContent = '';
+                return;
+            }
+
+            const cat = normalizeCategory(rawCat);
+            const spent = profile.transactions
+                .filter(tx => tx.categoryId === cat.id)
+                .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+            const totalAvailable = cat.carriedBalance + cat.budget;
+            const remaining = totalAvailable - spent;
+
+            previewEl.innerHTML = `Currently <span class="font-semibold text-slate-800">${formatMoney(remaining)}</span> available of ${formatMoney(totalAvailable)} total.`;
+        }
+
+        function openExpenseModal(preselectCatId = null) {
+            const profile = getActiveProfile();
+            if (profile.categories.length === 0) {
+                showToast('Please create a category first!');
+                openCategoryModal();
+                return;
+            }
+
+            populateExpenseCategoryDropdown();
+            if (preselectCatId) {
+                document.getElementById('expenseCategory').value = preselectCatId;
+                updateExpenseCategoryPreview();
+            }
+
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseDate').value = getTodayISO();
+
+            openModal('expenseModal');
+            setTimeout(() => document.getElementById('expenseAmount').focus(), 100);
+        }
+
+        function handleSaveExpense(e) {
+            e.preventDefault();
+            const profile = getActiveProfile();
+            const categoryId = document.getElementById('expenseCategory').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const description = document.getElementById('expenseDescription').value.trim();
+            const date = document.getElementById('expenseDate').value;
+
+            if (!categoryId || isNaN(amount) || amount <= 0 || !description || !date) return;
+
+            profile.transactions.push({
+                id: uid('tx'),
+                categoryId,
+                amount,
+                description,
+                date
+            });
+
+            saveState();
+            closeModal('expenseModal');
+            renderAll();
+            showToast(`Logged expense: ${formatMoney(amount)} for ${description}`);
+        }
+
+        function confirmDeleteTransaction(txId) {
+            const profile = getActiveProfile();
+            profile.transactions = profile.transactions.filter(tx => tx.id !== txId);
+            saveState();
+            renderAll();
+            showToast('Expense removed');
+        }
+
+        // Reset Month
         function openResetMonthModal() {
             const profile = getActiveProfile();
 
-            // Calculate rollover preview for categories that carry balances forward
             const rolloverSummaryLines = profile.categories
                 .map(normalizeCategory)
                 .filter(c => c.rollover || c.frequency !== 'monthly')
@@ -642,24 +1261,23 @@
                         .reduce((s, tx) => s + Number(tx.amount || 0), 0);
                     const remainingToCarry = (cat.carriedBalance + cat.budget) - spent;
                     const newTotalAvailable = remainingToCarry + cat.budget;
-                    return `<li class="flex justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                    return `<div class="flex items-center justify-between py-1 border-b border-slate-100 text-xs">
                         <span class="font-medium text-slate-700">${escapeHTML(cat.name)}</span>
-                        <span class="font-semibold ${remainingToCarry < 0 ? 'text-rose-600' : 'text-emerald-600'}">
-                            Carries ${formatMoney(remainingToCarry)} &rarr; ${formatMoney(newTotalAvailable)} avail
-                        </span>
-                    </li>`;
+                        <span class="text-emerald-600 font-semibold">Carries ${formatMoney(remainingToCarry)} → ${formatMoney(newTotalAvailable)} avail</span>
+                    </div>`;
                 });
 
             const previewHTML = `
                 <p>Ready to roll into a new month for <strong>${escapeHTML(profile.name)}</strong>?</p>
-                <ul class="text-xs text-slate-500 list-disc pl-4 space-y-1">
+                <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4 mt-2">
                     <li>Standard monthly categories reset to $0 spent.</li>
-                    <li>Rollover &amp; Sinking Fund categories carry their unused balances forward and add next month's allotment.</li>
+                    <li>Rollover & Sinking Fund categories carry their unused balances forward and add next month's allotment.</li>
+                    <li>Logged transaction history for the month is cleared.</li>
                 </ul>
                 ${rolloverSummaryLines.length > 0 ? `
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 mt-2">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Rollover &amp; Sinking Fund Preview</p>
-                        <ul>${rolloverSummaryLines.join('')}</ul>
+                    <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                        <p class="text-xs font-semibold text-slate-700 mb-1">Rollover & Sinking Fund Preview:</p>
+                        ${rolloverSummaryLines.join('')}
                     </div>
                 ` : ''}
             `;
@@ -681,7 +1299,6 @@
                         }
                         return cat;
                     });
-
                     profile.transactions = [];
                     saveState();
                     renderAll();
@@ -691,10 +1308,7 @@
             );
         }
 
-        // =====================================================================
-        // EXPORT & IMPORT TEMPLATE SHARING
-        // =====================================================================
-
+        // Template Sharing & Import
         function openShareModal() {
             const profile = getActiveProfile();
             const exportPayload = {
@@ -712,12 +1326,32 @@
                     };
                 })
             };
-
             document.getElementById('exportTemplateText').value = JSON.stringify(exportPayload);
             document.getElementById('importTemplateText').value = '';
             openModal('shareModal');
         }
-<!-- ... existing code ... -->
+
+        function copyTemplateCode() {
+            const input = document.getElementById('exportTemplateText');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            showToast('Template code copied to clipboard!');
+        }
+
+        function handleImportTemplate() {
+            const raw = document.getElementById('importTemplateText').value.trim();
+            if (!raw) {
+                showToast('Please paste a template code first.');
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.categories)) {
+                    throw new Error('Invalid format');
+                }
+
                 const importedProfile = {
                     id: uid('prof'),
                     name: parsed.templateName ? `${parsed.templateName} (Shared)` : 'Shared Family Budget',
@@ -729,7 +1363,7 @@
                             id: uid('cat'),
                             name: String(c.name || `Category ${idx + 1}`),
                             budget,
-                            frequency,
+                        frequency,
                             targetTotal: Number(c.targetTotal) || (budget * months),
                             rollover: frequency !== 'monthly' ? true : Boolean(c.rollover),
                             carriedBalance: 0,
@@ -739,7 +1373,28 @@
                     }),
                     transactions: []
                 };
-<!-- ... existing code ... -->
+
+                appState.profiles.push(importedProfile);
+                appState.activeProfileId = importedProfile.id;
+                saveState();
+                closeModal('shareModal');
+                renderAll();
+                showToast(`Successfully imported "${importedProfile.name}"!`);
+            } catch (e) {
+                console.error(e);
+                showToast('Invalid template code. Please check and try again.');
+            }
+        }
+
+        // Generic Modal Controls
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
         function openConfirmModal(title, message, onConfirm, options = {}) {
             document.getElementById('confirmModalTitle').textContent = title;
             const msgEl = document.getElementById('confirmModalMessage');
@@ -767,9 +1422,11 @@
                 closeModal('confirmModal');
                 if (typeof onConfirm === 'function') onConfirm();
             };
+
             openModal('confirmModal');
+            lucide.createIcons();
         }
-<!-- ... existing code ... -->
+
         // Boot App & Request Persistent Browser Storage
         window.addEventListener('DOMContentLoaded', () => {
             if (navigator.storage && navigator.storage.persist) {
