@@ -502,10 +502,61 @@
         </div>
     </div>
 
+    <!-- 6. AUTHENTICATION MODAL -->
+    <div id="authModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+        <div class="modal-panel bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div class="text-center">
+                <h3 id="authModalTitle" class="font-display font-bold text-xl text-slate-900">Welcome to BudgetFlow</h3>
+                <p id="authModalDesc" class="text-xs text-slate-500 mt-1">Please sign in to view and edit your budgets</p>
+            </div>
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label for="authEmail" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Email Address</label>
+                    <input type="email" id="authEmail" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                </div>
+                <div>
+                    <label for="authPassword" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                    <input type="password" id="authPassword" required minlength="6" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                </div>
+                <div class="flex flex-col gap-2 pt-2">
+                    <button type="submit" id="authSubmitBtn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition">Sign In</button>
+                    <button type="button" onclick="toggleAuthMode()" id="authToggleBtn" class="text-[11px] text-slate-500 hover:underline text-center">Need an account? Sign Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <!-- ===================================================================== -->
     <!-- JAVASCRIPT LOGIC -->
     <!-- ===================================================================== -->
-    <script>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+    
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyB3HJRR1mXxo6BNYC8JKtzhN6BvGIINQwM",
+        authDomain: "simplebudgetflow.firebaseapp.com",
+        projectId: "simplebudgetflow",
+        storageBucket: "simplebudgetflow.firebasestorage.app",
+        messagingSenderId: "230059890593",
+        appId: "1:230059890593:web:b639e55131f261f0639de0",
+        measurementId: "G-77639WVNZY"
+      };
+    
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
         const STORAGE_KEY = 'budgetflow_data_v2';
 
         let appState = {
@@ -648,35 +699,84 @@
             };
         }
 
-        // Load & Save State
-        function loadState() {
+        // =====================================================================
+        // LOAD & SAVE STATE
+        // =====================================================================
+        // 1. Updated saveState to write directly to Firestore
+        async function saveState() {
+            const user = auth.currentUser;
+            if (!user) return; // Only save if a user is logged in
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
-                        parsed.profiles.forEach(p => {
-                            p.categories = (p.categories || []).map(normalizeCategory);
-                        });
-                        appState = parsed;
-                        return;
-                    }
+                // Save the global appState to the user's specific document
+                await setDoc(doc(db, "users", user.uid), appState);
+            } catch (e) {
+                console.error('Error saving to Firestore:', e);
+            }
+        }
+        
+        // 2. Real-time database sync instead of a one-time loadState
+        function initializeRealtimeSync() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Listen to this user's document in real-time
+                    onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                        if (docSnap.exists()) {
+                            const parsed = docSnap.data();
+                            if (parsed && Array.isArray(parsed.profiles)) {
+                                parsed.profiles.forEach(p => {
+                                    p.categories = (p.categories || []).map(normalizeCategory);
+                                });
+                                appState = parsed;
+                            }
+                        } else {
+                            // New user: Seed initial sample data and save to cloud
+                            appState = createInitialSampleData();
+                            saveState();
+                        }
+                        renderAll();
+                    });
+                } else {
+                    // No user is logged in yet.
+                    console.log("No user signed in.");
+                    // (We will add a login screen trigger here next!)
                 }
-            } catch (e) {
-                console.error('Error reading localStorage:', e);
-            }
-            appState = createInitialSampleData();
-            saveState();
+            });
         }
 
-        function saveState() {
+        // =====================================================================
+        // AUTHENTICATION MANAGEMENT
+        // =====================================================================
+        let isSignUpMode = false;
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            document.getElementById('authModalTitle').textContent = isSignUpMode ? "Create Account" : "Welcome to BudgetFlow";
+            document.getElementById('authModalDesc').textContent = isSignUpMode ? "Register to start tracking shared budgets" : "Please sign in to view and edit your budgets";
+            document.getElementById('authSubmitBtn').textContent = isSignUpMode ? "Sign Up" : "Sign In";
+            document.getElementById('authToggleBtn').textContent = isSignUpMode ? "Already have an account? Sign In" : "Need an account? Sign Up";
+        }
+        
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+        
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-            } catch (e) {
-                console.error('Error saving localStorage:', e);
+                if (isSignUpMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showToast("Account created successfully!");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast("Welcome back!");
+                }
+            } catch (error) {
+                alert(error.message); // Displays sign-in or validation errors
             }
         }
 
+        // =====================================================================
+        // PROFILE MANAGEMENT
+        // =====================================================================
         function getActiveProfile() {
             let profile = appState.profiles.find(p => p.id === appState.activeProfileId);
             if (!profile && appState.profiles.length > 0) {
@@ -1432,9 +1532,29 @@
             if (navigator.storage && navigator.storage.persist) {
                 navigator.storage.persist().catch(() => {});
             }
-            loadState();
-            renderAll();
+            // Swap loadState() for real-time sync
+            initializeRealtimeSync(); 
         });
+
+        // Bind functions to window so HTML inline onclick events still work
+        window.switchProfile = switchProfile;
+        window.openProfileModal = openProfileModal;
+        window.openShareModal = openShareModal;
+        window.openResetMonthModal = openResetMonthModal;
+        window.openExpenseModal = openExpenseModal;
+        window.openCategoryModal = openCategoryModal;
+        window.confirmDeleteCategory = confirmDeleteCategory;
+        window.confirmDeleteTransaction = confirmDeleteTransaction;
+        window.handleSaveExpense = handleSaveExpense;
+        window.handleSaveCategory = handleSaveCategory;
+        window.handleSaveProfile = handleSaveProfile;
+        window.handleImportTemplate = handleImportTemplate;
+        window.toggleAuthMode = toggleAuthMode;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+
+
     </script>
 </body>
 </html>
