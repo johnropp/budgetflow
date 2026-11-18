@@ -530,32 +530,7 @@
     <!-- ===================================================================== -->
     <!-- JAVASCRIPT LOGIC -->
     <!-- ===================================================================== -->
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
-    
-      // Your web app's Firebase configuration
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyB3HJRR1mXxo6BNYC8JKtzhN6BvGIINQwM",
-        authDomain: "simplebudgetflow.firebaseapp.com",
-        projectId: "simplebudgetflow",
-        storageBucket: "simplebudgetflow.firebasestorage.app",
-        messagingSenderId: "230059890593",
-        appId: "1:230059890593:web:b639e55131f261f0639de0",
-        measurementId: "G-77639WVNZY"
-      };
-    
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <script>
         
         const STORAGE_KEY = 'budgetflow_data_v2';
 
@@ -1555,6 +1530,71 @@
         window.closeModal = closeModal;
 
 
+    </script>
+<!-- FIREBASE MODULE SCRIPT-->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+      
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3HJRR1mXxo6BNYC8JKtzhN6BvGIINQwM",
+            authDomain: "simplebudgetflow.firebaseapp.com",
+            projectId: "simplebudgetflow",
+            storageBucket: "simplebudgetflow.firebasestorage.app",
+            messagingSenderId: "230059890593",
+            appId: "1:230059890593:web:b639e55131f261f0639de0",
+            measurementId: "G-77639WVNZY"
+        };
+      
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Real-time database sync & Auth Listener
+        function initializeRealtimeSync() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    closeModal('authModal');
+                    onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                        if (docSnap.exists()) {
+                            const parsed = docSnap.data();
+                            if (parsed && Array.isArray(parsed.profiles)) {
+                                parsed.profiles.forEach(p => {
+                                    p.categories = (p.categories || []).map(normalizeCategory);
+                                });
+                                appState = parsed;
+                            }
+                        } else {
+                            appState = createInitialSampleData();
+                            saveState();
+                        }
+                        renderAll();
+                    });
+                } else {
+                    openModal('authModal');
+                }
+            });
+        }
+
+        window.saveState = async function() {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                await setDoc(doc(db, "users", user.uid), appState);
+            } catch (e) {
+                console.error('Error saving to Firestore:', e);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (navigator.storage && navigator.storage.persist) {
+                navigator.storage.persist().catch(() => {});
+            }
+            initializeRealtimeSync(); 
+        });
     </script>
 </body>
 </html>
