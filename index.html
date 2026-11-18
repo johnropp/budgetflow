@@ -1553,8 +1553,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Expose Firebase auth and db globally so the main script can use them
+        window.auth = auth;
+        window.db = db;
+
         // Real-time database sync & Auth Listener
-        function initializeRealtimeSync() {
+        window.initializeRealtimeSync = function() {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     closeModal('authModal');
@@ -1577,7 +1581,7 @@
                     openModal('authModal');
                 }
             });
-        }
+        };
 
         window.saveState = async function() {
             const user = auth.currentUser;
@@ -1589,12 +1593,24 @@
             }
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (navigator.storage && navigator.storage.persist) {
-                navigator.storage.persist().catch(() => {});
+        // Also expose auth methods for your form submit handler
+        window.handleAuthSubmit = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+        
+            try {
+                if (isSignUpMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showToast("Account created successfully!");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast("Welcome back!");
+                }
+            } catch (error) {
+                alert(error.message);
             }
-            initializeRealtimeSync(); 
-        });
+        };
     </script>
 </body>
 </html>
